@@ -72,8 +72,9 @@ while True:
     if results.masks is not None:
         masks = results.masks.data.cpu().numpy()
         classes = results.boxes.cls.cpu().numpy().astype(int)
+        boxes = results.boxes.xyxy.cpu().numpy()
 
-        for mask, cls in zip(masks, classes):
+        for mask, cls, box in zip(masks, classes, boxes):
             if cls != 0:
                 continue
 
@@ -82,12 +83,14 @@ while True:
             if not contours:
                 continue
 
-            # 마스크 외곽선 파란색으로 표시
             draw_mask_contour(frame, mask, color=(255, 0, 0))
 
-            # 가장 큰 contour 기준 bounding box 추출
-            x, y, w, h = cv2.boundingRect(contours[0])
-            crop = frame[y:y+h, x:x+w]
+            # YOLO bbox 기반 crop (신뢰도 향상)
+            x1, y1, x2, y2 = map(int, box)
+            x1, y1 = max(0, x1), max(0, y1)
+            x2, y2 = min(frame.shape[1], x2), min(frame.shape[0], y2)
+            crop = frame[y1:y2, x1:x2]
+
             pil = Image.fromarray(cv2.cvtColor(crop, cv2.COLOR_BGR2RGB))
 
             try:
