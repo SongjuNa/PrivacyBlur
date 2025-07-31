@@ -117,15 +117,9 @@ if not cap.isOpened():
 
 print("▶ 실시간 모자이크 시작 ('q' 키로 종료)")
 
-start_time = time.time()
-
 while True:
     ret, frame = cap.read()
     if not ret:
-        break
-
-    if time.time() - start_time > 30:
-        print("30초 경과. 종료합니다.")
         break
 
     orig = frame.copy()
