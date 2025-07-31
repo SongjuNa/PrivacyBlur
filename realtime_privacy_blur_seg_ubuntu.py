@@ -9,6 +9,12 @@ from sklearn.metrics import precision_score, recall_score, f1_score
 from ultralytics import YOLO
 from facenet_pytorch import MTCNN, InceptionResnetV1
 
+import os, csv
+os.makedirs("frames", exist_ok=True)
+frame_ids = []
+gt_labels = []
+gt_texts = []
+frame_id = 0
 
 #---------
 #camera index definition
@@ -117,6 +123,13 @@ while True:
     if not ret:
         break
 
+# 프레임 저장
+    frame_id += 1
+    frame_ids.append(frame_id)
+    cv2.imwrite(f"frames/frame_{frame_id:03}.jpg", frame)
+    gt_labels.append("TBD")
+    gt_texts.append("TBD")
+
     orig = frame.copy()
     results = yolo(frame, conf=0.5, iou=0.45)[0]
 
@@ -221,4 +234,13 @@ def measure_speed(func, frame, repeat=30):
         
 cap.release()
 cv2.destroyAllWindows()
+
+# 프레임별 gt_labels, gt_texts 저장된 csv 파일 저장
+with open("gt_labels_and_texts.csv", "w", newline="", encoding="utf-8-sig") as f:
+    writer = csv.writer(f)
+    writer.writerow(["frame_id", "gt_labels", "gt_texts"])
+    for i in range(len(frame_ids)):
+        writer.writerow([frame_ids[i], gt_labels[i], gt_texts[i]])
+
+print("✅ 프레임 이미지 및 gt_labels_and_texts.csv 저장 완료!")
 
