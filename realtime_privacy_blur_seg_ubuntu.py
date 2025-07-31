@@ -9,6 +9,12 @@ from sklearn.metrics import precision_score, recall_score, f1_score
 from ultralytics import YOLO
 from facenet_pytorch import MTCNN, InceptionResnetV1
 
+import os, csv
+os.makedirs("frames", exist_ok=True)
+frame_ids = []
+gt_labels = []
+gt_texts = []
+frame_id = 0
 
 #---------
 #camera index definition
@@ -56,6 +62,19 @@ def blur(img, x1, y1, x2, y2):
     blurred = cv2.GaussianBlur(sub, (51, 51), 0)
     img[y1:y2, x1:x2] = blurred
 
+def blur_polygon(image, polygon, ksize=(51, 51)):
+    """
+    polygon: easyocr에서 반환된 4개의 꼭짓점 좌표 [[x1, y1], [x2, y2], [x3, y3], [x4, y4]]
+    """
+    mask = np.zeros(image.shape[:2], dtype=np.uint8)
+    cv2.fillPoly(mask, [np.array(polygon, dtype=np.int32)], 255)
+
+    blurred = cv2.GaussianBlur(image, ksize, 0)
+    mask_3ch = cv2.merge([mask] * 3)
+
+    result = np.where(mask_3ch == 255, blurred, image)
+    return result
+
 def is_sensitive_text(text):
     patterns = [
     r'\d{6}-\d{7}',                         #  주민등록번호 (예: 900101-1234567)
@@ -98,9 +117,15 @@ if not cap.isOpened():
 
 print("▶ 실시간 모자이크 시작 ('q' 키로 종료)")
 
+start_time = time.time()
+
 while True:
     ret, frame = cap.read()
     if not ret:
+        break
+
+    if time.time() - start_time > 30:
+        print("30초 경과. 종료합니다.")
         break
 
     orig = frame.copy()
@@ -150,12 +175,7 @@ while True:
     texts = ocr.readtext(orig)
     for (bbox, text, conf) in texts:
         if is_sensitive_text(text):
-            pts = np.array(bbox, dtype=np.int32)
-            x1 = int(min(pt[0] for pt in pts))
-            y1 = int(min(pt[1] for pt in pts))
-            x2 = int(max(pt[0] for pt in pts))
-            y2 = int(max(pt[1] for pt in pts))
-            blur(frame, x1, y1, x2, y2)
+            frame = blur_polygon(frame, bbox)
 
     cv2.imshow('Privacy Protected Video', frame)
     if cv2.waitKey(1) & 0xFF == ord('q'):
