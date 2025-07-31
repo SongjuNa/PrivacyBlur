@@ -150,12 +150,7 @@ while True:
     texts = ocr.readtext(orig)
     for (bbox, text, conf) in texts:
         if is_sensitive_text(text):
-            pts = np.array(bbox, dtype=np.int32)
-            x1 = int(min(pt[0] for pt in pts))
-            y1 = int(min(pt[1] for pt in pts))
-            x2 = int(max(pt[0] for pt in pts))
-            y2 = int(max(pt[1] for pt in pts))
-            blur(frame, x1, y1, x2, y2)
+            frame = blur_polygon(frame, bbox)
 
     cv2.imshow('Privacy Protected Video', frame)
     if cv2.waitKey(1) & 0xFF == ord('q'):
