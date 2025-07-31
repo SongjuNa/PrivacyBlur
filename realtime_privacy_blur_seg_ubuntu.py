@@ -56,6 +56,20 @@ def blur(img, x1, y1, x2, y2):
     blurred = cv2.GaussianBlur(sub, (51, 51), 0)
     img[y1:y2, x1:x2] = blurred
 
+def blur_polygon(image, polygon, ksize=(51, 51)):
+    """
+    polygon: easyocr에서 반환된 4개의 꼭짓점 좌표 [[x1, y1], [x2, y2], [x3, y3], [x4, y4]]
+    """
+    mask = np.zeros(image.shape[:2], dtype=np.uint8)
+    cv2.fillPoly(mask, [np.array(polygon, dtype=np.int32)], 255)
+
+    blurred = cv2.GaussianBlur(image, ksize, 0)
+    mask_3ch = cv2.merge([mask] * 3)
+
+    result = np.where(mask_3ch == 255, blurred, image)
+    return result
+
+
 def is_sensitive_text(text):
     patterns = [
     r'\d{6}-\d{7}',                         #  주민등록번호 (예: 900101-1234567)
