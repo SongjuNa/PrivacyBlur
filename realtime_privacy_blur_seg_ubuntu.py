@@ -25,8 +25,8 @@ camera_index = find_camera_index()
 
 # ─────────────────────────────────────
 # 설정
-THRESHOLD = 0.30
-centroid = np.load('/home/server4/Downloads/centroid_sj.npy')
+THRESHOLD = 0.40
+centroid = np.load('/home/server4/Downloads/centroid_jw.npy')
 
 # ─────────────────────────────────────
 # 모델 초기화
@@ -58,11 +58,12 @@ def blur(img, x1, y1, x2, y2):
 
 def is_sensitive_text(text):
     patterns = [
-        r'\d{6}-\d{7}', r'01[0-9]-\d{3,4}-\d{4}',
+        r'\d{6}-\d{7}', r'01[0-9]-\d{3,4}-\d{4}',    
         r'[a-zA-Z0-9_.+-]+@[a-zA-Z0-9-]+\.[a-zA-Z0-9-.]+',
         r'\d{1,4}동|\d{1,4}호', r'[\uac00-\ud7a3]+[시군구동읍면로길]',
         r'\d{9,14}', r'(대학교|중학교|고등학교|회사|직장|소속)',
         r'(이름|성명)[:：]?\s?[가-힣]{2,4}'
+        
     ]
     for p in patterns:
         if re.search(p, text.replace(" ", "")):
