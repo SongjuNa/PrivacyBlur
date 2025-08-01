@@ -174,55 +174,9 @@ while True:
     cv2.imshow('Privacy Protected Video', frame)
     if cv2.waitKey(1) & 0xFF == ord('q'):
         break
-#---------------------------------------
-#[1] 얼굴 탐지 정확도 평가        
-def evaluate_face_detection(gt_labels, pred_labels):
-    tp = np.sum((gt_labels == 1) & (pred_labels == 1))
-    tn = np.sum((gt_labels == 0) & (pred_labels == 0))
-    fp = np.sum((gt_labels == 0) & (pred_labels == 1))
-    fn = np.sum((gt_labels == 1) & (pred_labels == 0))
-    acc = (tp + tn) / len(gt_labels)
-    print(f"\n[1. 얼굴 탐지 정확도 평가]")
-    print(f" - 정탐(TP): {tp}, 오탐(FP): {fp}, 미탐(FN): {fn}, 정음(TN): {tn}")
-    print(f" - Accuracy: {acc:.3f}")
-
-# ─────────────────────────────────────
-# [2] ArcFace 유사도 감소율
-def arcface_drop(original_scores, blurred_scores):
-    original_scores = np.array(original_scores)
-    blurred_scores = np.array(blurred_scores)
-    drop_rates = original_scores - blurred_scores
-    avg_drop = np.mean(drop_rates)
-    print(f"\n[2. ArcFace 유사도 감소율]")
-    print(f" - 개별 감소율: {drop_rates}")
-    print(f" - 평균 감소율: {avg_drop:.3f}")
-
-# ─────────────────────────────────────
-# [3] 민감 텍스트 탐지 정확도
-def arcface_drop(original_scores, blurred_scores):
-    original_scores = np.array(original_scores)
-    blurred_scores = np.array(blurred_scores)
-    drop_rates = original_scores - blurred_scores
-    avg_drop = np.mean(drop_rates)
-    print(f"\n[2. ArcFace 유사도 감소율]")
-    print(f" - 개별 감소율: {drop_rates}")
-    print(f" - 평균 감소율: {avg_drop:.3f}")
-
-# ─────────────────────────────────────
-# [4] 실시간 처리 속도 측정
-def measure_speed(func, frame, repeat=30):
-    times = []
-    for _ in range(repeat):
-        start = time.time()
-        func(frame)
-        end = time.time()
-        times.append(end - start)
-    avg_latency = np.mean(times)
-    fps = 1 / avg_latency
-    print(f"\n[4. 실시간 처리 속도]")
-    print(f" - 평균 Latency: {avg_latency * 1000:.2f} ms")
-    print(f" - 평균 FPS:     {fps:.2f}")
-
+        
+cap.release()
+cv2.destroyAllWindows()
 # ─────────────────────────────────────
 # [GT 저장] 민감 텍스트 유무 기준 gt_texts 생성
 gt_texts = []  # 초기화
