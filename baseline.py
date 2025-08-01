@@ -82,6 +82,8 @@ print("▶ 실시간 모자이크 시작 ('q' 키로 종료)")
 total_frames = 0
 start_time = time.time()
 
+pred_texts = []
+
 while True:
     ret, frame = cap.read()
     if not ret:
