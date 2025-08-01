@@ -235,8 +235,10 @@ while True:
     if not ret:
         break
 
-    texts = ocr.readtext(frame)
+    orig = frame.copy()
+    texts = ocr.readtext(orig)  
     has_sensitive = 0
+    
     for (_, text, _) in texts:
         if is_sensitive_text(text):
             has_sensitive = 1
@@ -249,10 +251,10 @@ while True:
     if cv2.waitKey(1) & 0xFF == ord('q'):
         break
 
-print(f"▶ GT 프레임 수: {len(gt_texts)}, 민감 텍스트 있는 프레임 수: {sum(gt_texts)}")
-np.save("gt_texts.npy", np.array(gt_texts))
-print("▶ gt_texts.npy 저장 완료")
-
         
 cap.release()
 cv2.destroyAllWindows()
+
+print(f"▶ GT 프레임 수: {len(gt_texts)}, 민감 텍스트 있는 프레임 수: {sum(gt_texts)}")
+np.save("gt_texts.npy", np.array(gt_texts))
+print("▶ gt_texts.npy 저장 완료")
