@@ -151,6 +151,7 @@ while True:
         break
 
 #---------------------------------------
+pred_texts = []
 # pred_texts 저장
 pred_texts = np.array(pred_texts)
 np.save("pred_texts.npy", pred_texts)
