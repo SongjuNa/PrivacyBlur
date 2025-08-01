@@ -4,19 +4,6 @@ import numpy as np
 import easyocr
 import re
 
-#---------
-#camera index definition
-def find_camera_index():
-    for i in range(10):
-        cap = cv2.VideoCapture(i)
-        if cap.isOpened():
-            cap.release()
-            return i
-    raise RuntimeError("not find camera")
-
-
-camera_index = find_camera_index()
-
 # 민감 텍스트 판별 함수
 def is_sensitive_text(text):
     patterns = [
@@ -48,7 +35,11 @@ def is_sensitive_text(text):
 ocr = easyocr.Reader(['ko', 'en'])
 
 # 웹캠 연결
+camera_index=0
 cap = cv2.VideoCapture(camera_index)
+if not cap.isOpened():
+    raise RuntimeError("웹캠을 열 수 없습니다.")
+    
 gt_texts = []
 print("▶ GT 텍스트 수집 중... (q 키로 종료)")
 
