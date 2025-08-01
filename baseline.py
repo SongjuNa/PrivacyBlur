@@ -54,14 +54,23 @@ def blur_polygon(image, polygon, ksize=(51, 51)):
 
 def is_sensitive_text(text):
     patterns = [
-        r'\d{6}-\d{7}', r'01[0-9]-\d{3,4}-\d{4}',
-        r'[a-zA-Z0-9_.+-]+@[a-zA-Z0-9-]+\.[a-zA-Z0-9-.]+',
-        r'\d{1,4}동|\d{1,4}호', r'[\uac00-\ud7a3]+[시군구동읍면로길]',
-        r'[\uac00-\ud7a3]{2,20}(아파트|빌라|주택|맨션|오피스텔|연립)',
-        r'\d{1,4}-\d{1,4}', r'\d{2,4}-\d{2,4}-\d{4,7}', r'\d{9,14}',
-        r'(대학교|중학교|고등학교|회사|직장|소속)',
-        r'(이름|성명)[:：]?\s?[가-힣]{2,4}'
-    ]
+    #개인 민감정보
+    r'\d{6}-\d{7}',                         #  주민등록번호
+    r'01[0-9]-\d{3,4}-\d{4}',              #  휴대폰 번호
+    r'[a-zA-Z0-9_.+-]+@[a-zA-Z0-9-]+\.[a-zA-Z0-9-.]+',  #  이메일 주소
+    r'(이름|성명)[:：]?\s?[가-힣]{2,4}' ,    #  이름 표기
+    r'\d{2,4}-\d{2,4}-\d{4,7}',             # 일반 은행형 계좌번호
+    r'\d{9,14}',                           #  사업자 등록번호 / 숫자만 있는 계좌번호
+    r'(중학교|고등학교|대학교|회사|직장|소속)', #  소속기관 (학교, 회사 등)
+
+    #주소 및 위치정보
+    r'\d{1,4}동|\d{1,4}호',                #  아파트 동/호수
+    r'[\uac00-\ud7a3]+[시군구동읍면로길]', #  도로명 주소 일부 
+    r'[\uac00-\ud7a3]+[시군구동읍면로길]',  # 지역 주소 단어
+    r'[\uac00-\ud7a3]{2,20}(아파트|빌라|주택|맨션|오피스텔|연립)',  # 건물 유형
+    r'\d{1,4}-\d{1,4}',                            # 지번 주소
+    r'(서울|부산|대구|인천|광주|대전|울산|세종|제주|경기|강원|충북|충남|전북|전남|경북|경남|창원)(특별시|광역시|특례시|도|특별자치도)' # 대표 지역명
+ ]
     for p in patterns:
         if re.search(p, text.replace(" ", "")):
             return True
@@ -90,6 +99,8 @@ while True:
         for mask, cls, box in zip(masks, classes, boxes):
             if cls != 0:
                 continue
+                
+            # YOLO bbox 기반 crop (신뢰도 향상)    
             x1, y1, x2, y2 = map(int, box)
             x1, y1 = max(0, x1), max(0, y1)
             x2, y2 = min(frame.shape[1], x2), min(frame.shape[0], y2)
@@ -108,6 +119,7 @@ while True:
             with torch.no_grad():
                 emb = resnet(face.unsqueeze(0).to(device))[0].cpu().numpy()
             cos_sim = np.dot(centroid, emb) / (np.linalg.norm(centroid) * np.linalg.norm(emb))
+            print(f"[Debug] 얼굴 유사도: {cos_sim:.3f}")
 
             if cos_sim < THRESHOLD:
                 mosaic_mask(frame, mask)
@@ -125,18 +137,61 @@ while True:
 
     pred_labels.append(frame_pred_label)
 
+    # 개인정보 블러(OCR 탐지)
+    pred_flag = 0   # 현재 프레임에 개인정보 텍스트 있는지 표시
     texts = ocr.readtext(orig)
     for (bbox, text, conf) in texts:
         if is_sensitive_text(text):
             frame = blur_polygon(frame, bbox)
+            pred_flag = 1  # 개인정보 텍스트 발견 시 1로 설정
+    pred_texts.append(pred_flag) # 프레임별 결과 저장
 
-    total_frames += 1
     cv2.imshow('Privacy Protected Video', frame)
     if cv2.waitKey(1) & 0xFF == ord('q'):
         break
 
+#---------------------------------------
+# pred_texts 저장
+pred_texts = np.array(pred_texts)
+np.save("pred_texts.npy", pred_texts)
+print(f"[완료] pred_texts.npy 저장 ({len(pred_texts)}프레임)")
+
+# 평가 함수
+def evaluate_text_detection(gt_texts, pred_texts):
+    gt_texts = np.array(gt_texts)
+    pred_texts = np.array(pred_texts)
+
+    tp = np.sum((gt_texts == 1) & (pred_texts == 1))
+    tn = np.sum((gt_texts == 0) & (pred_texts == 0))
+    fp = np.sum((gt_texts == 0) & (pred_texts == 1))
+    fn = np.sum((gt_texts == 1) & (pred_texts == 0))
+
+    acc = (tp + tn) / len(gt_texts)
+    precision = tp / (tp + fp + 1e-8)
+    recall = tp / (tp + fn + 1e-8)
+    f1 = 2 * precision * recall / (precision + recall + 1e-8)
+
+    print("\n[3. 민감 텍스트 탐지 정확도]")
+    print(f" - 정탐(TP): {tp}, 오탐(FP): {fp}, 미탐(FN): {fn}, 정음(TN): {tn}")
+    print(f" - Accuracy : {acc:.3f}")
+    print(f" - Precision: {precision:.3f}")
+    print(f" - Recall   : {recall:.3f}")
+    print(f" - F1 Score : {f1:.3f}")
+
+# 평가 실행
+gt = np.load("/home/server4/Downloads/gt_texts.npy")   #경로 바꿔야 됨
+pred_texts = np.load("pred_texts.npy")
+
+# 길이 불일치 대응
+min_len = min(len(gt), len(pred_texts))
+gt = gt[:min_len]
+pred_texts = pred_texts[:min_len]
+
+evaluate_text_detection(gt, pred_texts)
+
+
 # ----------------------------
-# 저장 및 FPS 계산
+# pred_labels 저장 및 FPS 계산
 save_path = "C:/Users/ed007/OneDrive/바탕 화면/pred_labels.npy"
 os.makedirs(os.path.dirname(save_path), exist_ok=True)
 np.save(save_path, np.array(pred_labels))
