@@ -117,6 +117,8 @@ if not cap.isOpened():
 
 print("▶ 실시간 모자이크 시작 ('q' 키로 종료)")
 
+pred_texts = []
+
 while True:
     ret, frame = cap.read()
     if not ret:
@@ -206,7 +208,14 @@ def evaluate_text_detection(gt_texts, pred_texts):
     print(f" - F1 Score : {f1:.3f}")
 
 # 평가 실행
-gt = np.load("gt_texts.npy")   #경로 바꿔야 됨
+gt = np.load("/home/server4/Downloads/gt_texts.npy")   #경로 바꿔야 됨
+pred_texts = np.load("pred_texts.npy")
+
+# 길이 불일치 대응
+min_len = min(len(gt), len(pred_texts))
+gt = gt[:min_len]
+pred_texts = pred_texts[:min_len]
+
 evaluate_text_detection(gt, pred_texts)
 
         
