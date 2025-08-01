@@ -31,7 +31,7 @@ if not cap.isOpened():
     raise RuntimeError("웹캠을 열 수 없습니다.")
 
 device = 'cuda' if torch.cuda.is_available() else 'cpu'
-yolo = YOLO(r'C:\Users\ed007\yolov8n-seg.pt')
+yolo = YOLO('/home/server4/Downloads/yolov8n-seg.pt')
 mtcnn = MTCNN(image_size=224, margin=40, device=device)
 resnet = InceptionResnetV1(pretrained='vggface2').eval().to(device)
 ocr = easyocr.Reader(['ko', 'en'])
