@@ -13,7 +13,7 @@ import os
 # ----------------------------
 # 설정
 THRESHOLD = 0.40
-centroid = np.load(r'C:\Users\ed007\centroid.npy')
+centroid = np.load('/home/server4/Downloads/centroid_jw.npy')
 
 # 평가용 pred 저장 리스트
 pred_labels = []
