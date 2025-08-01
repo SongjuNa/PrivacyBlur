@@ -20,8 +20,8 @@ pred_labels = []
 
 # ----------------------------
 # 폴더 생성
-os.makedirs("C:/Users/ed007/OneDrive/바탕 화면/before_blur", exist_ok=True)
-os.makedirs("C:/Users/ed007/OneDrive/바탕 화면/after_blur", exist_ok=True)
+os.makedirs("/home/server4/Downloads/before_blur", exist_ok=True)
+os.makedirs("/home/server4/Downloads/after_blur", exist_ok=True)
 
 # ----------------------------
 # 모델 초기화
@@ -127,8 +127,8 @@ while True:
             else:
                 face_bgr = cv2.cvtColor(np.array(pil), cv2.COLOR_RGB2BGR)
                 save_name = f"face_{int(time.time() * 1000)}.jpg"
-                before_path = os.path.join("C:/Users/ed007/OneDrive/바탕 화면/before_blur", save_name)
-                after_path = os.path.join("C:/Users/ed007/OneDrive/바탕 화면/after_blur", save_name)
+                before_path = os.path.join("/home/server4/Downloads/before_blur", save_name)
+                after_path = os.path.join("/home/server4/Downloads/after_blur", save_name)
                 cv2.imwrite(before_path, face_bgr)
                 frame_mosaic = frame.copy()
                 mosaic_mask(frame_mosaic, mask)
@@ -179,7 +179,7 @@ def evaluate_text_detection(gt_texts, pred_texts):
     print(f" - F1 Score : {f1:.3f}")
 
 # 평가 실행
-gt = np.load("/home/server4/Downloads/gt_texts.npy")   #경로 바꿔야 됨
+gt = np.load("/home/server4/Downloads/gt_texts.npy")   
 pred_texts = np.load("pred_texts.npy")
 
 # 길이 불일치 대응
@@ -192,7 +192,7 @@ evaluate_text_detection(gt, pred_texts)
 
 # ----------------------------
 # pred_labels 저장 및 FPS 계산
-save_path = "C:/Users/ed007/OneDrive/바탕 화면/pred_labels.npy"
+save_path = "/home/server4/Downloads/pred_labels.npy"
 os.makedirs(os.path.dirname(save_path), exist_ok=True)
 np.save(save_path, np.array(pred_labels))
 cap.release()
@@ -238,8 +238,8 @@ def compute_accuracy(folder_path, centroid, threshold):
     return correct / total if total > 0 else 0
 
 def smart_evaluation():
-    pred_path = "C:/Users/ed007/OneDrive/바탕 화면/pred_labels.npy"
-    gt_path = "C:/Users/ed007/OneDrive/바탕 화면/gt_labels.npy"
+    pred_path = "/home/server4/Downloads/pred_labels.npy"
+    gt_path = "/home/server4/Downloads/gt_labels.npy"
     pred_labels = np.load(pred_path)
 
     if os.path.exists(gt_path):
@@ -272,8 +272,8 @@ def smart_evaluation():
     else:
         print("\n[1. 얼굴 탐지 정확도 평가 생략됨 - GT 없음]")
 
-    acc_before = compute_accuracy("C:/Users/ed007/OneDrive/바탕 화면/before_blur", centroid, THRESHOLD)
-    acc_after = compute_accuracy("C:/Users/ed007/OneDrive/바탕 화면/after_blur", centroid, THRESHOLD)
+    acc_before = compute_accuracy("/home/server4/Downloads/before_blur", centroid, THRESHOLD)
+    acc_after = compute_accuracy("/home/server4/Downloads/after_blur", centroid, THRESHOLD)
     print("\n[2. ArcFace 모자이크 전/후 인식률 비교]")
     print(f" - 원본 얼굴 인식률: {acc_before:.3f}")
     print(f" - 모자이크 후 인식률: {acc_after:.3f}")
