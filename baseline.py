@@ -89,6 +89,8 @@ while True:
     if not ret:
         break
 
+    total_frames += 1
+
     orig = frame.copy()
     results = yolo(frame, conf=0.5, iou=0.45)[0]
     frame_pred_label = 0
